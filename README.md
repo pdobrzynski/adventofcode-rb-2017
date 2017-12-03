@@ -36,6 +36,8 @@ Unless otherwise specified, pass one or more filenames containing the desired da
 
 Exceptions:
 
+* 3 (Spiral Matrix): Pass the input in ARGV.
+
 # Posting schedule and policy
 
 Before I post my day N solution, the day N leaderboard **must** be full.
