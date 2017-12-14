@@ -1,4 +1,4 @@
-require 'set'
+require_relative 'lib/search'
 
 neighbours = (ARGV.empty? ? DATA : ARGF).each_line.map { |l|
   left, right = l.split('<->')
@@ -8,14 +8,7 @@ neighbours = (ARGV.empty? ? DATA : ARGF).each_line.map { |l|
 puts 0.step { |i|
   break i if neighbours.empty?
 
-  queue = [neighbours.keys.first]
-  seen = Set.new
-
-  while (n = queue.pop)
-    next if seen.include?(n)
-    seen << n
-    queue.concat(neighbours[n])
-  end
+  _, seen = Search::bfs(neighbours.keys.first, neighbours, ->(_) { false })
 
   puts seen.size if seen.include?(0)
 
