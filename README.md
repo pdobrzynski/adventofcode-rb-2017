@@ -37,6 +37,7 @@ Unless otherwise specified, pass one or more filenames containing the desired da
 Exceptions:
 
 * 3 (Spiral Matrix): Pass the input in ARGV.
+* 14 (Disk Defrag): Pass the input in ARGV.
 
 # Posting schedule and policy
 
