@@ -1,19 +1,19 @@
-require_relative 'lib/search'
+require_relative 'lib/union_find'
 
 neighbours = (ARGV.empty? ? DATA : ARGF).each_line.map { |l|
   left, right = l.split('<->')
   [left.to_i, right.split(?,).map(&:to_i)]
 }.to_h
 
-puts 0.step { |i|
-  break i if neighbours.empty?
+nodes = neighbours.keys
 
-  _, _, seen = Search::bfs(neighbours.keys.first, neighbours, ->(_) { false })
+uf = UnionFind.new(nodes)
+neighbours.each { |k, vs| vs.each { |v| uf.union(k, v) } }
 
-  puts seen.size if seen.include?(0)
+zeros_parent = uf.find(0)
+puts nodes.count { |x| uf.find(x) == zeros_parent }
 
-  neighbours.delete_if { |k, _| seen.include?(k) }
-}
+puts nodes.map { |x| uf.find(x) }.uniq.size
 
 __END__
 0 <-> 412, 480, 777, 1453
