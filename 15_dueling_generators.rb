@@ -1,5 +1,15 @@
 MOD = 2 ** 31 - 1
 
+def gen(v, multiplier)
+  Enumerator.new { |e|
+    loop {
+      v *= multiplier
+      v %= MOD
+      e << v
+    }
+  }
+end
+
 A = ARGV[0]&.to_i || 783
 B = ARGV[1]&.to_i || 325
 AM = 16807
