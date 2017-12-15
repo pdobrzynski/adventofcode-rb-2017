@@ -8,7 +8,7 @@ neighbours = (ARGV.empty? ? DATA : ARGF).each_line.map { |l|
 puts 0.step { |i|
   break i if neighbours.empty?
 
-  _, seen = Search::bfs(neighbours.keys.first, neighbours, ->(_) { false })
+  _, _, seen = Search::bfs(neighbours.keys.first, neighbours, ->(_) { false })
 
   puts seen.size if seen.include?(0)
 
