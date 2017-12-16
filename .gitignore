@@ -1,2 +1,4 @@
 secrets
 input[0-9]*
+*.so
+*.o
