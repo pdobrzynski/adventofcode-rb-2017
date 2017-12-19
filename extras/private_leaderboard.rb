@@ -1,7 +1,7 @@
 require 'json'
 require 'time'
 
-people = JSON.parse(ARGF.read)['members'].values
+people = ARGV.flat_map { |a| JSON.parse(File.read(a))['members'].values }
 
 max_day = people.flat_map { |v| v['completion_day_level'].keys }.map(&:to_i).max
 longest_name = people.map { |v| v['name'] || v['id'] }.map(&:size).max
