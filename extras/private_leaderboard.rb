@@ -14,10 +14,10 @@ score = Hash.new(0)
       ts && [p['name'] || p['id'], Time.parse(ts)]
     }.compact.to_h
     puts "Day #{day} Part #{part}:"
-    fmt = "%#{longest_name}s %s %d"
+    fmt = "%#{longest_name}s %s %d %d"
     completing_people.sort_by(&:last).each_with_index { |(p, t), i|
       score[p] += people.size - i
-      puts fmt % [p, t, people.size - i]
+      puts fmt % [p, t, people.size - i, score[p]]
     }
     puts
   }
