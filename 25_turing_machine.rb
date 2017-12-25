@@ -35,15 +35,21 @@ until input.empty?
   }
 end
 
-ticker = Hash.new(0)
-pos = 0
+ticker = [0] * (check_after ** 0.5).ceil * 2
+pos = ticker.size / 2
 
 check_after.times {
   ticker[pos], where_to_go, state = states[state][ticker[pos]]
   pos += where_to_go
+  if pos == -1
+    pos += ticker.size
+    ticker.unshift(*[0] * ticker.size)
+  elsif pos == ticker.size
+    ticker.concat([0] * ticker.size)
+  end
 }
 
-puts ticker.values.sum
+puts ticker.sum
 
 __END__
 Begin in state A.
