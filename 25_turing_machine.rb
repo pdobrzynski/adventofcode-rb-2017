@@ -13,7 +13,7 @@ def parse_rule(expect, input)
 end
 
 def parse_state(line)
-  line.chomp[-2].to_sym
+  line.chomp[-2].ord - ?A.ord
 end
 
 input = (ARGV.empty? ? DATA : ARGF).readlines
@@ -21,13 +21,15 @@ input = (ARGV.empty? ? DATA : ARGF).readlines
 state = parse_state(input.shift)
 check_after = Integer(input.shift[/\d+/])
 
-states = {}
+states = []
 
 until input.empty?
   raise 'discarded non-empty line' unless input.shift.strip.empty?
 
   parsing_state = parse_state(input.shift)
-  states[parsing_state] = 2.times.map { |i|
+  # Assume input comes in order.
+  raise "parsing #{parsing_state}, wanted #{states.size}" if parsing_state != states.size
+  states << 2.times.map { |i|
     # Assume input comes in order.
     parse_rule(i, input.shift(4))
   }
