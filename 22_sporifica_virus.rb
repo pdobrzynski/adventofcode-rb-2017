@@ -36,9 +36,9 @@ def infects(s, n, states)
 
   i = 0
   while i < n
-    cache_key = [-1, 0, 1].reduce(0) { |acc, cdy|
+    cache_key = [-2, -1, 0, 1, 2].reduce(0) { |acc, cdy|
       row = g[y + cdy]
-      acc << 6 | [-1, 0, 1].reduce(0) { |row_acc, cdx|
+      acc << 6 | [-2, -1, 0, 1, 2].reduce(0) { |row_acc, cdx|
         begin
         row_acc << 2 | row[x + cdx]
         rescue => e
@@ -49,24 +49,24 @@ def infects(s, n, states)
     } << 4 | (dy + 1) << 2 | (dx + 1)
     if cache.has_key?(cache_key)
       cached = cache[cache_key]
-      steps_to_skip = cached[9]
+      steps_to_skip = cached[25]
       # Can only use cache if we won't go over number of steps.
       if i + steps_to_skip < n
         j = 0
-        [-1, 0, 1].each { |cdy|
+        [-2, -1, 0, 1, 2].each { |cdy|
           row = g[y + cdy]
-          [-1, 0, 1].each { |cdx|
+          [-2, -1, 0, 1, 2].each { |cdx|
             row[x + cdx] = cached[j]
             j += 1
           }
         }
 
         i += steps_to_skip
-        infects += cached[10]
-        dy = cached[11]
-        dx = cached[12]
-        y += cached[13]
-        x += cached[14]
+        infects += cached[26]
+        dy = cached[27]
+        dx = cached[28]
+        y += cached[29]
+        x += cached[30]
         hit += 1
         # Moving multiple steps might mess up cache calculation.
         in_progress_cache.clear
@@ -78,11 +78,11 @@ def infects(s, n, states)
     miss += 1
 
     in_progress_cache.select { |k, (_, _, cy, cx)|
-      (y - cy).abs >= 2 || (x - cx).abs >= 2
+      (y - cy).abs >= 3 || (x - cx).abs >= 3
     }.each { |k, (ci, cinf, cy, cx)|
-      cache[k] = [-1, 0, 1].flat_map { |cdy|
+      cache[k] = [-2, -1, 0, 1, 2].flat_map { |cdy|
         row = g[cy + cdy]
-        [-1, 0, 1].map { |cdx|
+        [-2, -1, 0, 1, 2].map { |cdx|
           row[cx + cdx]
         }
       } + [i - ci, infects - cinf, dy, dx, y - cy, x - cx]
