@@ -35,21 +35,20 @@ until input.empty?
   }
 end
 
-ticker = [0] * (check_after ** 0.5).ceil * 2
-pos = ticker.size / 2
+ones = {}
+pos = 0
 
 check_after.times {
-  ticker[pos], where_to_go, state = states[state][
-    ticker[pos] || 0.tap { ticker.concat([0] * ticker.size) }
-  ]
-  pos += where_to_go
-  if pos < 0
-    pos += ticker.size
-    ticker.unshift(*[0] * ticker.size)
+  write, where_to_go, state = states[state][ones.has_key?(pos) ? 1 : 0]
+  if write == 1
+    ones[pos] = true
+  else
+    ones.delete(pos)
   end
+  pos += where_to_go
 }
 
-puts ticker.sum
+puts ones.size
 
 __END__
 Begin in state A.
