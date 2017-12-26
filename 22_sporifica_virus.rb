@@ -14,57 +14,6 @@ def infects(s, n, states)
   clean = states.index(:clean)
   flagged = states.index(:flagged)
 
-  next_state = (0...states.size).to_a.rotate(1).freeze
-
-  # cache key = nine squares, facing
-  # (could do better by making it facing-independent)
-  # cache key => [steps to advance, infects, nine squares, facing, where to move]
-  cache = {}
-
-  t = Time.now
-  a = [(0...states.size).to_a] * 9
-  a[0].product(*a[1..-1]).each { |neighbourhood|
-    cache_key = neighbourhood.reduce(0) { |acc, c|
-      acc << 2 | c
-    }
-    [[-1, 0], [1, 0], [0, -1], [0, 1]].each { |dy0, dx0|
-      g = neighbourhood.each_slice(3).to_a
-      cn = 0
-      dy = dy0
-      dx = dx0
-      infects = 0
-      x = 1
-      y = 1
-      while (0..2).cover?(x) && (0..2).cover?(y)
-        cn += 1
-        old_status = g[y][x]
-        new_status = next_state[old_status]
-        infects += 1 if new_status == infected
-        # Strangely, case/when slows by about 30%?!
-        # Maybe Integer#=== is expensive?
-        if old_status == clean
-          dy, dx = [-dx, dy]
-        elsif old_status == infected
-          dy, dx = [dx, -dy]
-        elsif old_status == flagged
-          dy *= -1
-          dx *= -1
-        end
-        g[y][x] = new_status
-        y += dy
-        x += dx
-      end
-      cache[cache_key << 4 | (dy0 + 1) << 2 | (dx0 + 1)] = [
-        cn,
-        infects,
-        g.flatten,
-        [dy, dx],
-        [y - 1, x - 1],
-      ]
-    }
-  }
-  STDERR.puts "cache ready in #{Time.now - t}"
-
   # No I'm not actually sure this padding size is provably correct
   # But instead doing a Hash[Coordinate => State] slows us by 5x-6x.
   g = grid(s, (n ** 0.5 / states.size).ceil, clean, infected)
@@ -72,38 +21,73 @@ def infects(s, n, states)
   dy = -1
   dx = 0
   infects = 0
-  scans = 0
-  saves = 0
+
+  next_state = (0...states.size).to_a.rotate(1).freeze
+
+  # cache key = nine squares, facing
+  # (could do better by making it facing-independent)
+  # cache key => [i at entrance, where it is]
+  in_progress_cache = {}
+  # cache key => [steps to advance, nine squares, facing, where to move]
+  cache = {}
+
+  hit = 0
+  miss = 0
 
   i = 0
   while i < n
     cache_key = [-1, 0, 1].reduce(0) { |acc, cdy|
       row = g[y + cdy]
       acc << 6 | [-1, 0, 1].reduce(0) { |row_acc, cdx|
+        begin
         row_acc << 2 | row[x + cdx]
+        rescue => e
+        puts "Row is #{row.size}, you want #{x + cdx}"
+        puts e
+        end
       }
     } << 4 | (dy + 1) << 2 | (dx + 1)
-    steps_to_skip, infects_to_add, cached_grid, new_dir, delta_pos = cache.fetch(cache_key)
-    # Can only use cache if we won't go over number of steps.
-    if i + steps_to_skip < n
-      j = 0
-      [-1, 0, 1].each { |cdy|
-        row = g[y + cdy]
-        [-1, 0, 1].each { |cdx|
-          row[x + cdx] = cached_grid[j]
-          j += 1
+    if cache.has_key?(cache_key)
+      cached = cache[cache_key]
+      steps_to_skip = cached[9]
+      # Can only use cache if we won't go over number of steps.
+      if i + steps_to_skip < n
+        j = 0
+        [-1, 0, 1].each { |cdy|
+          row = g[y + cdy]
+          [-1, 0, 1].each { |cdx|
+            row[x + cdx] = cached[j]
+            j += 1
+          }
         }
-      }
 
-      i += steps_to_skip
-      saves += steps_to_skip
-      scans += 9
-      infects += infects_to_add
-      dy, dx = new_dir
-      y += delta_pos[0]
-      x += delta_pos[1]
-      next
+        i += steps_to_skip
+        infects += cached[10]
+        dy = cached[11]
+        dx = cached[12]
+        y += cached[13]
+        x += cached[14]
+        hit += 1
+        # Moving multiple steps might mess up cache calculation.
+        in_progress_cache.clear
+        next
+      end
+    elsif !in_progress_cache.has_key?(cache_key)
+      in_progress_cache[cache_key] = [i, infects, y, x]
     end
+    miss += 1
+
+    in_progress_cache.select { |k, (_, _, cy, cx)|
+      (y - cy).abs >= 2 || (x - cx).abs >= 2
+    }.each { |k, (ci, cinf, cy, cx)|
+      cache[k] = [-1, 0, 1].flat_map { |cdy|
+        row = g[cy + cdy]
+        [-1, 0, 1].map { |cdx|
+          row[cx + cdx]
+        }
+      } + [i - ci, infects - cinf, dy, dx, y - cy, x - cx]
+      in_progress_cache.delete(k)
+    }
 
     old_status = g[y][x]
     new_status = next_state[old_status]
@@ -124,7 +108,7 @@ def infects(s, n, states)
     i += 1
   end
 
-  STDERR.puts("For #{scans} scans we saved #{saves} iterations")
+  STDERR.puts "#{hit} hits, #{miss} miss"
 
   infects
 end
